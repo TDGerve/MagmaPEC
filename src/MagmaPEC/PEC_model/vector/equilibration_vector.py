@@ -83,7 +83,7 @@ class equilibration:
     def _get_parameters(self, **kwargs):
         """Calculate melt liquidus temperature, fO2 and melt Fe3+/Fe2+ ratios"""
 
-        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles)
+        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles())
         pressure = kwargs.get("P_bar", self.P_bar)
 
         T_K = kwargs.get(
@@ -128,7 +128,7 @@ class equilibration:
         """
         Model equilibrium Kds and calculate measured Kds
         """
-        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles)
+        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles())
         pressure = kwargs.get("P_bar", self.P_bar)
         forsterite = kwargs.get("forsterite", self._olivine.forsterite)
 
@@ -235,7 +235,7 @@ class equilibration:
         forsterite_host = self._olivine.forsterite
 
         # Set up initial data
-        melt_mol_fractions = self.inclusions.moles
+        melt_mol_fractions = self.inclusions.moles()
         Kd_equilibrium, Kd_real = self.calculate_Kds(
             melt_mol_fractions=melt_mol_fractions,
             T_K=T_K,
@@ -397,7 +397,7 @@ class equilibration:
 
                 bar(sum(~disequilibrium) / total_inclusions)
 
-        corrected_compositions = melt_mol_fractions.wt_pc
+        corrected_compositions = melt_mol_fractions.wt_pc()
 
         # # Set compositions of inclusions with equilibration errors to NaNs.
         # idx_errors = self._olivine_corrected.index[self._olivine_corrected.isna()]

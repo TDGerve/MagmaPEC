@@ -135,7 +135,7 @@ class crystallisation_correction:
         self._get_settings()
 
         # Inclusion compositions in oxide mol fractions
-        melt_mol_fractions = self.inclusions.moles
+        melt_mol_fractions = self.inclusions.moles()
         # Convert to the total amount of moles after equilibration
         melt_mol_fractions = melt_mol_fractions.mul(
             (1 + equilibration_crystallisation),
@@ -190,7 +190,7 @@ class crystallisation_correction:
 
                 #################################################
                 # Recalculate FeO
-                melt_wtpc_loop = var["melt_mol_fractions"].wt_pc
+                melt_wtpc_loop = var["melt_mol_fractions"].wt_pc()
                 FeO = melt_wtpc_loop["FeO"]
 
                 FeO_target_loop = self.FeO_target.target(melt_wtpc=melt_wtpc_loop)
@@ -225,7 +225,7 @@ class crystallisation_correction:
                 ##################################################
 
                 # determine FeO convergence
-                melt_wtpc_loop = var["melt_mol_fractions"].wt_pc
+                melt_wtpc_loop = var["melt_mol_fractions"].wt_pc()
                 FeO = melt_wtpc_loop["FeO"]
                 FeO_target = self.FeO_target.target(melt_wtpc=melt_wtpc_loop)
                 FeO_mismatch_loop = self.FeO_mismatch(FeO=FeO, FeO_target=FeO_target)
@@ -234,7 +234,7 @@ class crystallisation_correction:
                 melt_mol_fractions.loc[var["melt_mol_fractions"].index, :] = var[
                     "melt_mol_fractions"
                 ].copy()
-                # mi_wtPercent = mi_moles.wt_pc
+                # mi_wtPercent = mi_moles.wt_pc()
 
                 FeO_mismatch.loc[FeO_mismatch_loop.index] = FeO_mismatch_loop.values
 
@@ -252,7 +252,9 @@ class crystallisation_correction:
                 bar(sum(~FeO_mismatch) / total_inclusions)
 
         self._model_results.loc[FeO_mismatch.index, "FeO_converge"] = ~FeO_mismatch
-        self.inclusions.loc[melt_mol_fractions.index] = melt_mol_fractions.wt_pc.values
+        self.inclusions.loc[melt_mol_fractions.index] = (
+            melt_mol_fractions.wt_pc().values
+        )
 
         # Set non-corrected inclusions to NA.
         idx_errors = self._olivine_corrected.index[self._olivine_corrected.isna()]

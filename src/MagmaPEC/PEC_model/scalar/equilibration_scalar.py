@@ -20,6 +20,7 @@ def equilibration_scalar(
     inclusion: Melt,
     olivine: Union[float, MagmaSeries],
     P_bar: float,
+    intermediate_steps: False,
     **kwargs,
 ):
     """
@@ -60,7 +61,7 @@ def equilibration_scalar(
             f"Olivine host should be forsterite number as float, or full composition as MagmaSeries, not {type(olivine)}"
         )
     else:
-        olivine = olivine.moles
+        olivine = olivine.moles()
         forsterite = olivine["MgO"] / (olivine["MgO"] + olivine["FeO"])
 
     # Fix some parameters for Kd calculation
@@ -72,7 +73,7 @@ def equilibration_scalar(
     )
     # Calculate initial Fe speciation
     Fe3Fe2, Fe2_FeTotal = _calculate_Fe2(
-        inclusion.moles,
+        inclusion.moles(),
         Fe2_behaviour="buffered",
         T_K=temperature,
         fO2=fO2,
@@ -92,7 +93,7 @@ def equilibration_scalar(
         inclusion.recalculate(inplace=True)
     # Calculate moles
     mi_moles = Melt(columns=inclusion.elements, units="mol fraction", datatype="oxide")
-    mi_moles.loc[0] = inclusion.moles[inclusion.elements].values
+    mi_moles.loc[0] = inclusion.moles()[inclusion.elements].values
     mi_moles = mi_moles.normalise()
     # Equilibrium Kd
     Kd_equilibrium = calculate_Kd(melt_mol_fractions=mi_moles.iloc[-1], Fe3Fe2=Fe3Fe2)
@@ -107,11 +108,14 @@ def equilibration_scalar(
     if Kd_real < Kd_equilibrium:
         stepsize = -stepsize
 
+    FeMg_exchange = np.array([0])
+
     ##### MAIN LOOP #####
     #####################
     while not np.isclose(Kd_real, Kd_equilibrium, atol=Kd_converge, rtol=0):
         # Exchange Fe-Mg
-        idx = mi_moles.index[-1] + stepsize
+        FeMg_exchange = np.append(FeMg_exchange, FeMg_exchange[-1] + stepsize)
+        idx = mi_moles.index[-1] + 1
         mi_moles.loc[idx] = (mi_moles.iloc[-1] + FeMg_vector.mul(stepsize)).values
         # Equilibrium Kd and Fe speciation for new composition
         Fe3Fe2, Fe2_FeTotal = _calculate_Fe2(
@@ -142,12 +146,13 @@ def equilibration_scalar(
             x0=0,
             x1=0.05,
         ).root
-        mi_moles.loc[idx] = mi_moles.loc[idx] + olivine.mul(olivine_amount)
+        idx_ol = idx + 1
+        mi_moles.loc[idx_ol] = mi_moles.loc[idx] + olivine.mul(olivine_amount)
         olivine_crystallised = np.append(
             olivine_crystallised, olivine_crystallised[-1] + olivine_amount
         )
         # mi_moles = mi_moles.normalise()
-        temperature_new = mi_moles.loc[idx].temperature(P_bar=P_bar)
+        temperature_new = mi_moles.iloc[-1].temperature(P_bar=P_bar)
         ######################################################
         # New equilibrium Kd and Fe speciation
         Fe3Fe2, Fe2_FeTotal = _calculate_Fe2(
@@ -159,10 +164,12 @@ def equilibration_scalar(
             Fe3Fe2_model=Fe3Fe2_model,
         )
         Kd_equilibrium = calculate_Kd(
-            melt_mol_fractions=mi_moles.normalise().loc[idx], Fe3Fe2=Fe3Fe2
+            melt_mol_fractions=mi_moles.normalise().iloc[-1], Fe3Fe2=Fe3Fe2
         )
         # Real Kd
-        melt_MgFe = mi_moles.loc[idx, "MgO"] / (mi_moles.loc[idx, "FeO"] * Fe2_FeTotal)
+        melt_MgFe = mi_moles.loc[idx_ol, "MgO"] / (
+            mi_moles.loc[idx_ol, "FeO"] * Fe2_FeTotal
+        )
         Kd_real = melt_MgFe / olivine_MgFe
         # Assess equilibrium
         disequilibrium = ~np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge, rtol=0)
@@ -171,7 +178,7 @@ def equilibration_scalar(
         # Reverse one iteration and reduce stepsize if Kd
         # gets oversteppend by more than the convergence value
         if decrease_stepsize:
-            mi_moles.drop(index=idx, inplace=True)
+            mi_moles.drop(index=[idx, idx_ol], inplace=True)
             olivine_crystallised = olivine_crystallised[:-1]
             # Reset equilibrium and real Kd
             Fe3Fe2, Fe2_FeTotal = _calculate_Fe2(
@@ -192,14 +199,18 @@ def equilibration_scalar(
             Kd_real = melt_MgFe / olivine_MgFe
             stepsize = stepsize / decrease_factor
     # Recalculate compositions to oxide wt. %
-    equilibrated_composition = mi_moles.wt_pc
+    equilibrated_composition = mi_moles.wt_pc()
 
     if len(olivine_crystallised) == 1:
         olivine_crystallised = np.array([0])
         temperature_new = temperature
 
     olivine_crystallised *= 100
-    equilibrated_composition.index = olivine_crystallised
+    # equilibrated_composition.index = olivine_crystallised
+
+    if not intermediate_steps:
+        equilibrated_composition = equilibrated_composition.iloc[::2, :]
+        equilibrated_composition.index = olivine_crystallised
 
     return (
         equilibrated_composition,

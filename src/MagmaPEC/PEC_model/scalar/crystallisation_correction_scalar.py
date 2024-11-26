@@ -6,9 +6,10 @@ import pandas as pd
 from MagmaPandas.configuration import configuration
 from MagmaPandas.MagmaFrames import Melt
 from MagmaPandas.MagmaSeries import MagmaSeries
+from scipy.optimize import root_scalar
+
 from MagmaPEC.equilibration_functions import _root_Kd
 from MagmaPEC.Kd_calculation import _calculate_Kds
-from scipy.optimize import root_scalar
 
 from ...PEC_configuration import PEC_configuration
 
@@ -19,6 +20,7 @@ def crystallisation_correction_scalar(
     FeO_target: Union[int, float, callable],
     P_bar: float,
     min_stepsize=1e-4,
+    intermediate_steps=False,
     **kwargs,
 ):
     """
@@ -51,9 +53,7 @@ def crystallisation_correction_scalar(
     # SET UP INITIAL DATA
     # Dataframe with new compositions
     mi_moles = Melt(columns=inclusion.elements, units="mol fraction", datatype="oxide")
-    mi_moles.loc[equilibration_crystallisation] = inclusion.moles[
-        inclusion.elements
-    ].values
+    mi_moles.loc[0] = inclusion.moles()[inclusion.elements].values
     # Covert to moles left after equilibration
     mi_moles = mi_moles.mul((1 + equilibration_crystallisation), axis=0)
     # Get olivine molar oxide fractions
@@ -74,7 +74,7 @@ def crystallisation_correction_scalar(
             f"Olivine host should be forsterite number as float, or full composition as MagmaSeries, not {type(olivine_host)}"
         )
     else:
-        olivine = olivine_host.moles
+        olivine = olivine_host.moles()
         olivine = olivine.reindex(mi_moles.columns)
         olivine = olivine.fillna(0.0)
         olivine.recalculate(inplace=True)
@@ -96,14 +96,16 @@ def crystallisation_correction_scalar(
         stepsize = -stepsize
 
     ##### OLIVINE MELTING/CRYSTALLISATION LOOP #####
-    mi_wtPercent = mi_moles.wt_pc
-
+    mi_wtPercent = mi_moles.wt_pc()
+    olivine_corrected = np.array([equilibration_crystallisation])
     while not np.isclose(FeO, FeO_target, atol=converge, rtol=0):
 
         if abs(stepsize) < min_stepsize:
             break
-
-        idx = mi_moles.index[-1] + stepsize
+        olivine_corrected = np.append(
+            olivine_corrected, olivine_corrected[-1] + stepsize
+        )
+        idx = mi_moles.index[-1] + 1
         mi_moles.loc[idx] = (mi_moles.iloc[-1] + olivine.mul(stepsize)).values
         # mi_moles = mi_moles.normalise()
         ###### FE-MG EXCHANGE UNTIL KD EQUILIBRIIUM #####
@@ -122,14 +124,15 @@ def crystallisation_correction_scalar(
             x1=0.05,
             # bracket=[-0.5,0.5],
         ).root
-        mi_moles.loc[idx] = mi_moles.loc[idx] + FeMg_vector.mul(exchange_amount)
+        idx_FeMg = idx + 1
+        mi_moles.loc[idx_FeMg] = mi_moles.loc[idx] + FeMg_vector.mul(exchange_amount)
         # mi_moles = mi_moles.normalise()
         #################################################
-        mi_wtPercent = mi_moles.wt_pc
-        FeO = mi_wtPercent.loc[idx, "FeO"]
+        mi_wtPercent = mi_moles.wt_pc()
+        FeO = mi_wtPercent.loc[idx_FeMg, "FeO"]
 
         if calculate_FeO_target:
-            FeO_target = calculate_FeO_target(mi_wtPercent.loc[idx])
+            FeO_target = calculate_FeO_target(mi_wtPercent.iloc[-1])
 
         disequilibrium = ~np.isclose(FeO, FeO_target, atol=converge, rtol=0)
         overstepped = np.sign(FeO_target - FeO) != np.sign(stepsize)
@@ -137,18 +140,22 @@ def crystallisation_correction_scalar(
         # Reverse one iteration and reduce stepsize if FeO
         # gets oversteppend by more than the convergence value
         if decrease_stepsize:
-            mi_moles.drop(index=idx, inplace=True)
+            mi_moles.drop(index=[idx, idx_FeMg], inplace=True)
             # olivine_corrected.drop(index=idx, inplace=True)
-            mi_wtPercent = mi_moles.wt_pc
+            mi_wtPercent = mi_moles.wt_pc()
             idx = mi_wtPercent.index[-1]
             FeO = mi_wtPercent.loc[idx, "FeO"]
             stepsize = stepsize / decrease_factor
+            olivine_corrected = olivine_corrected[:-1]
 
     Kd_equilibrium, Kd_real = calculate_Kd(mi_moles.iloc[-1].normalise())
     temperature_new = mi_wtPercent.iloc[-1].temperature(P_bar=P_bar)
-    olivine_corrected = mi_moles.index.values * 100
+    olivine_corrected = olivine_corrected * 100
     if olivine_corrected.max() == 0:
-        mi_wtPercent = mi_moles.wt_pc
+        mi_wtPercent = mi_moles.wt_pc()
+
+    if not intermediate_steps:
+        mi_wtPercent = mi_wtPercent.iloc[::2, :]
 
     return (
         mi_wtPercent,

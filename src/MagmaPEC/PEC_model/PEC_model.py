@@ -131,7 +131,7 @@ class PEC:
 
     @property
     def olivine(self):
-        return self._olivine.wt_pc
+        return self._olivine.wt_pc()
 
     @olivine.setter
     def olivine(self, value):
@@ -253,7 +253,9 @@ class PEC:
             self._model_results.copy(),
         )
 
-    def correct_inclusion(self, index, plot=True, **kwargs) -> pd.DataFrame:
+    def correct_inclusion(
+        self, index, plot=True, intermediate_steps=False, **kwargs
+    ) -> pd.DataFrame:
         """Correct a single inclusion for PEC"""
 
         if type(index) == int:
@@ -268,7 +270,7 @@ class PEC:
             FeO_target = self.FeO_target.function
 
         equilibrated, olivine_equilibrated, *_ = equilibration_scalar(
-            inclusion, olivine, P_bar, **kwargs
+            inclusion, olivine, P_bar, intermediate_steps=intermediate_steps, **kwargs
         )
         corrected, olivine_corrected, *_ = crystallisation_correction_scalar(
             equilibrated.iloc[-1].copy(),
@@ -276,6 +278,7 @@ class PEC:
             FeO_target,
             P_bar,
             eq_crystallised=olivine_equilibrated[-1],
+            intermediate_steps=intermediate_steps,
             **kwargs,
         )
         total_corrected = olivine_corrected[-1]
@@ -295,7 +298,7 @@ class PEC:
                 PEC_amount=total_corrected,
             )
 
-        return total_inclusion
+        return total_inclusion, olivine_corrected
 
     def _process_olivines(self, olivines, samples: pd.Index):
 
@@ -307,7 +310,7 @@ class PEC:
 
         if isinstance(olivines, Olivine):
             olivines = olivines.fillna(0.0)
-            return olivines.moles
+            return olivines.moles()
         # For olivines
 
         try:

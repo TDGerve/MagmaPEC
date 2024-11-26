@@ -140,7 +140,7 @@ class PEC_olivine:
             self._olivine = olivine.normalise()
         else:
             olivines = olivines.fillna(0.0)
-            self._olivine = olivines.moles
+            self._olivine = olivines.moles()
         self._olivine = self._olivine.reindex(
             columns=self.inclusions.columns, fill_value=0.0
         )
@@ -223,7 +223,7 @@ class PEC_olivine:
 
     @property
     def olivine(self):
-        return self._olivine.wt_pc
+        return self._olivine.wt_pc()
 
     @olivine.setter
     def olivine(self, value):
@@ -278,8 +278,8 @@ class PEC_olivine:
 
         Fe3Fe2_model = Fe3Fe2_models[configuration.Fe3Fe2_model]
 
-        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles)
-        melt_wtpc = melt.wt_pc
+        melt = kwargs.get("melt_mol_fractions", self.inclusions.moles())
+        melt_wtpc = melt.wt_pc()
 
         pressure = kwargs.get("P_bar", self.P_bar)
         dfO2 = kwargs.get("dfO2", configuration.dfO2)
@@ -330,7 +330,7 @@ class PEC_olivine:
 
         dfO2 = kwargs.get("dfO2", configuration.dfO2)
 
-        melt = kwargs.get("melt", self.inclusions.moles)
+        melt = kwargs.get("melt", self.inclusions.moles())
         pressure = kwargs.get("P_bar", self.P_bar)
         forsterite = kwargs.get("forsterite", self._olivine.forsterite)
 
@@ -475,7 +475,7 @@ class PEC_olivine:
         #     return 1 / (1 + Fe3Fe2)
 
         # Set up initial data
-        mi_moles = self.inclusions.moles
+        mi_moles = self.inclusions.moles()
         Kd_equilibrium, Kd_real = self.calculate_Kds(
             melt=mi_moles,
             T_K=temperatures,
@@ -685,7 +685,7 @@ class PEC_olivine:
 
                 bar(sum(~disequilibrium) / total_inclusions)
 
-        corrected_compositions = mi_moles.wt_pc
+        corrected_compositions = mi_moles.wt_pc()
 
         # Set compositions of inclusions with equilibration errors to NaNs.
         idx_errors = self._olivine_corrected.index[
@@ -739,7 +739,7 @@ class PEC_olivine:
         dfO2 = getattr(configuration, "dfO2")
         P_bar = self.P_bar.loc[remove_errors]
         # Inclusion compositions in oxide mol fractions
-        mi_moles = self.inclusions.loc[remove_errors].moles
+        mi_moles = self.inclusions.loc[remove_errors].moles()
         # Convert to the total amount of moles after equilibration
         mi_moles = mi_moles.mul(
             (
@@ -842,7 +842,7 @@ class PEC_olivine:
                 # mi_moles_loop = mi_moles_loop.normalise()
                 #################################################
                 # Recalculate FeO
-                mi_wtpc_loop = mi_moles_loop.wt_pc
+                mi_wtpc_loop = mi_moles_loop.wt_pc()
                 FeO = mi_wtpc_loop["FeO"]
                 if self._FeO_as_function:
                     FeO_target_loop = self.FeO_function(mi_wtpc_loop)
@@ -878,13 +878,13 @@ class PEC_olivine:
                     # Stop iterating if stepsize falls below 1e-6
                     FeO_converge_error = list(stepsize.index[abs(stepsize) < 1e-6])
                     # self._olivine_corrected.loc[terminate, "PE_crystallisation"] = 0
-                    # mi_moles.loc[terminate] = self.inclusions.moles.loc[
+                    # mi_moles.loc[terminate] = self.inclusions.moles().loc[
                     #     terminate
                     # ].values
                     self._model_results.loc[FeO_converge_error, "FeO_converge"] = False
 
                 # determine FeO convergence
-                mi_wtpc_loop = mi_moles_loop.wt_pc
+                mi_wtpc_loop = mi_moles_loop.wt_pc()
                 FeO = mi_wtpc_loop["FeO"]
                 if self._FeO_as_function:
                     FeO_target = self.FeO_function(mi_wtpc_loop)
@@ -898,7 +898,7 @@ class PEC_olivine:
 
                 # Copy loop data to the main variables
                 mi_moles.loc[mi_moles_loop.index, :] = mi_moles_loop.copy()
-                # mi_wtPercent = mi_moles.wt_pc
+                # mi_wtPercent = mi_moles.wt_pc()
 
                 # Remove inclusions that returned equilibration or FeO convergence errors from future iterations
                 remove_samples = (
@@ -919,7 +919,7 @@ class PEC_olivine:
                 FeO_mismatch.loc[FeO_mismatch_loop.index] = FeO_mismatch_loop.values
                 bar(sum(~FeO_mismatch) / total_inclusions)
 
-        corrected_compositions = mi_moles.wt_pc
+        corrected_compositions = mi_moles.wt_pc()
 
         self._model_results.loc[FeO_mismatch.index, "FeO_converge"] = ~FeO_mismatch
 
