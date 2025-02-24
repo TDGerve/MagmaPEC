@@ -1,2 +1,2 @@
-from .crystallisation_correction_scalar import *
-from .equilibration_scalar import *
+from .Crystallisation_correction_scalar import *
+from .Equilibration_scalar import *
