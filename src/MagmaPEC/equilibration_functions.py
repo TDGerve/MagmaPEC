@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 from MagmaPandas import configuration
-from MagmaPandas.Fe_redox import Fe3Fe2_models
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2 import calculate_fO2
 from scipy.optimize import root_scalar
 
@@ -44,7 +44,7 @@ def _root_Kd(
     T_K = melt_x_new.temperature(P_bar=P_bar)
     fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar)
 
-    Fe3Fe2_model = Fe3Fe2_models[configuration.Fe3Fe2_model]
+    Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
     Fe3Fe2 = Fe3Fe2_model._calculate_Fe3Fe2_(
         melt_mol_fractions=melt_x_new,
         T_K=T_K,

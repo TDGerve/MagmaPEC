@@ -20,17 +20,17 @@ config_handler.set_global(
 
 
 from MagmaPandas.configuration import configuration
-from MagmaPandas.Fe_redox import Fe3Fe2_models
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2 import calculate_fO2
-from MagmaPandas.Kd.Ol_melt import Kd_models
+from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames import Melt, Olivine
 
 from MagmaPEC.Kd_calculation import calculate_observed_Kd
 from MagmaPEC.PEC_configuration import PEC_configuration
-from MagmaPEC.PEC_model.scalar.crystallisation_correction_scalar import (
+from MagmaPEC.PEC_model.scalar.Crystallisation_correction_scalar import (
     crystallisation_correction,
 )
-from MagmaPEC.PEC_model.scalar.equilibration_scalar import equilibration_scalar
+from MagmaPEC.PEC_model.scalar.Equilibration_scalar import equilibration_scalar
 
 # from .PEC_functions import _root_Kd, _root_temperature
 
@@ -276,7 +276,7 @@ class PEC_olivine:
             melt inclusion Fe3+/Fe2+ ratios.
         """
 
-        Fe3Fe2_model = Fe3Fe2_models[configuration.Fe3Fe2_model]
+        Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
 
         melt = kwargs.get("melt_mol_fractions", self.inclusions.moles())
         melt_wtpc = melt.wt_pc()
@@ -326,7 +326,7 @@ class PEC_olivine:
         """
         Model equilibrium Kds and calculate measured Kds
         """
-        Kd_model = Kd_models[configuration.Kd_model]
+        Kd_model = Kd_olmelt_FeMg_models_dict[configuration.Kd_model]
 
         dfO2 = kwargs.get("dfO2", configuration.dfO2)
 

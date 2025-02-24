@@ -5,9 +5,9 @@ import elementMass as e
 import numpy as np
 import pandas as pd
 from MagmaPandas.configuration import configuration
-from MagmaPandas.Fe_redox import Fe3Fe2_models
+from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2 import calculate_fO2
-from MagmaPandas.Kd.Ol_melt.models import Kd_models
+from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
 from MagmaPandas.MagmaFrames import Melt
 from MagmaPandas.MagmaSeries import MagmaSeries
 from scipy.optimize import root_scalar
@@ -47,8 +47,8 @@ def equilibration_scalar(
     temperature = inclusion.temperature(P_bar=P_bar)
     fO2 = calculate_fO2(T_K=temperature, P_bar=P_bar, dfO2=dfO2)
     # Collect configured models
-    Fe3Fe2_model = Fe3Fe2_models[configuration.Fe3Fe2_model]
-    Kd_model = Kd_models[configuration.Kd_model]
+    Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
+    Kd_model = Kd_olmelt_FeMg_models_dict[configuration.Kd_model]
     # Get olivine molar oxide fractions
     if isinstance(olivine, float):
         if olivine < 0 or olivine > 1:
@@ -229,7 +229,7 @@ def _calculate_Fe2(
     Fe3Fe2_model: callable = None,
 ):
     if Fe3Fe2_model is None:
-        Fe3Fe2_model = Fe3Fe2_models[configuration.Fe3Fe2_model]
+        Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
 
     m_fractions = melt_mol_fractions.copy()
     m_fractions = m_fractions.normalise()

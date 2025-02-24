@@ -4,7 +4,6 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 from alive_progress import alive_bar, config_handler
-from MagmaPandas.configuration import configuration
 
 from MagmaPEC.equilibration_functions import diffusive_equilibration
 from MagmaPEC.PEC_configuration import PEC_configuration
