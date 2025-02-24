@@ -3,7 +3,7 @@ import math
 import numpy as np
 from MagmaPandas import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.fO2 import calculate_fO2
+from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from scipy.optimize import root_scalar
 
 from MagmaPEC.Kd_calculation import calculate_Kds
@@ -60,6 +60,7 @@ def _root_Kd(
         P_bar=P_bar,
         Fe3Fe2=Fe3Fe2,
         offset_parameters=Kd_offset_parameters,
+        fO2=fO2,
         **kwargs,
     )
 

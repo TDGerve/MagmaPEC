@@ -5,7 +5,7 @@ import MagmaPandas as mp
 import numpy as np
 import pandas as pd
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
+from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
 
 from MagmaPEC.error_propagation.FeOi_error_propagation import FeOi_prediction
 

@@ -3,8 +3,8 @@ from typing import Tuple
 import pandas as pd
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.fO2 import calculate_fO2
-from MagmaPandas.Kd.Ol_melt import Kd_olmelt_FeMg_models_dict
+from MagmaPandas.fO2.fO2_calculate import calculate_fO2
+from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
 
 
 def calculate_Fe2FeTotal(Fe3Fe2, **kwargs):
@@ -79,6 +79,7 @@ def _calculate_Kds(melt_mol_fractions, forsterite, P_bar):
         P_bar=P_bar,
         Fe3Fe2=Fe3Fe2,
         offset_parameters=0.0,
+        fO2=fO2,
     )
 
     return Kd_equilibrium, Kd_observed

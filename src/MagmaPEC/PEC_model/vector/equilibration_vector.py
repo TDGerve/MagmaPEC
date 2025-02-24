@@ -20,7 +20,7 @@ config_handler.set_global(
 
 from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
-from MagmaPandas.fO2 import calculate_fO2
+from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 
 from MagmaPEC.equilibration_functions import isothermal_equilibration
 from MagmaPEC.Kd_calculation import calculate_Kds
@@ -132,7 +132,7 @@ class equilibration:
         pressure = kwargs.get("P_bar", self.P_bar)
         forsterite = kwargs.get("forsterite", self._olivine.forsterite)
 
-        T_K, _, Fe3Fe2 = self._get_parameters(melt_mol_fractions=melt, P_bar=pressure)
+        T_K, fO2, Fe3Fe2 = self._get_parameters(melt_mol_fractions=melt, P_bar=pressure)
 
         Kd_equilibrium, Kd_observed = calculate_Kds(
             melt_mol_fractions=melt,
@@ -141,6 +141,7 @@ class equilibration:
             P_bar=pressure,
             Fe3Fe2=Fe3Fe2,
             offset_parameters=self.offset_parameters["Kd"],
+            fO2=fO2,            
         )
 
         if isinstance(Kd_equilibrium, (float, int)):
