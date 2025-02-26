@@ -18,10 +18,10 @@ class PEC:
     """
     Class for post-entrapment crystallisation (PEC) correction of olivine-hosted melt inclusions. The algorithm is modified after Petrolog3:
 
-    L. V. Danyushesky and P. Plechov (2011) Petrolog3: Integrated software for modeling crystallization processes Geochemistry, Geophysics, Geosystems, vol 12 
+    L. V. Danyushesky and P. Plechov (2011) Petrolog3: Integrated software for modeling crystallization processes Geochemistry, Geophysics, Geosystems, vol 12
 
-    Model specific settings like calculation stepsizes and convergence values are controlled by :py:class:`~MagmaPEC.PEC_configuration.PEC_configuration`. 
-    
+    Model specific settings like calculation stepsizes and convergence values are controlled by :py:class:`~MagmaPEC.PEC_configuration.PEC_configuration`.
+
     More general settings like |fO2| buffer (offsets) and model selection for Kd, |Fe3Fe2| and liquidus temperature are set in the configuration of `MagmaPandas <https://magmapandas.readthedocs.io/en/latest/notebooks/config.html>`_
 
     Parameters
@@ -120,6 +120,9 @@ class PEC:
         self._create_output_dataframes(samples=self.inclusions.index)
 
     def reset(self):
+        """
+        Reset all data to their initial, uncorrected states.
+        """
         self.inclusions = self.inclusions_uncorrected.copy()
         self._olivine_corrected.loc[:, :] = np.nan
         self._model_results.loc[:, :] = pd.NA
@@ -143,8 +146,7 @@ class PEC:
     @property
     def equilibrated(self) -> pd.Series:
         """
-        Booleans indicating which inclusions are in equilibrium with their host olivine
-        based on modelled and observed Fe-Mg exchange Kd's.
+        Booleans set to True for inclusions that are in Fe-Mg equilibrium with their host olivine.
         """
 
         Kd_converge = getattr(PEC_configuration, "Kd_converge") * 1.5
@@ -159,7 +161,7 @@ class PEC:
     @property
     def Fe_loss(self) -> pd.Series:
         """
-        Booleans indicating which inclusions have experienced Fe loss
+        Booleans set to True for inclusions that have experienced Fe-loss
         """
         FeO_converge = getattr(PEC_configuration, "FeO_converge")
         FeO_target = self.FeO_target.target(melt_wtpc=self.inclusions)
@@ -177,8 +179,8 @@ class PEC:
     def equilibrate_inclusions(self, **kwargs):
         """
         Run correction stage 1.
-        
-        Fe-Mg equilibrium between inclusions and olivine hosts is restored based on modelled partitioning coefficients. Isothermal
+
+        Fe-Mg equilibrium between inclusions and olivine hosts is restored via isothermal Fe-Mg cation exchange. Equilibrium is checked with modelled partitioning coefficients (Kd).
         """
 
         model = equilibration(
@@ -203,7 +205,7 @@ class PEC:
         Run correction stage 2.
 
         Correct melt inclusions for post entrapment modification by melting or crystallising host olivine.
-        Expects the melt inclusion is completely equilibrated with the host crystal.
+        Expects complete Fe-Mg equilibration between inclusions and host crystals (i.e. the output from stage 1: :py:meth:`~MagmaPEC.PEC_model.PEC.equilibrate_inclusions`).
         The models exits when inclusion initial FeO contents are restored.
         """
 
@@ -241,7 +243,9 @@ class PEC:
 
     def correct(self, **kwargs) -> Tuple[Melt, pd.DataFrame, pd.DataFrame]:
         """
-        Correct inclusions for PEC
+        Correct inclusions for PEC.
+
+        Runs Stage 1, :py:meth:`~MagmaPEC.PEC_model.PEC.equilibrate_inclusions`, and 2, :py:meth:`~MagmaPEC.PEC_model.PEC.correct_olivine_crystallisation`, to fully correct melt inclusion for post-entrapment modification processes.
         """
 
         self.equilibrate_inclusions(**kwargs)
@@ -260,7 +264,17 @@ class PEC:
     def correct_inclusion(
         self, index, plot=True, intermediate_steps=False, **kwargs
     ) -> pd.DataFrame:
-        """Correct a single inclusion for PEC"""
+        """Correct a single inclusion for PEC
+
+        Parameters
+        ----------
+        index               :   int, str
+            row index of the inclusion in the DataFrame as integer, or name of the inclusion as string
+        plot                :   boolean
+            print MgO vs FeO plot of the PEC results if True
+        intermediate_steps  :   boolean
+            keep intermediate steps C1A and C2A if True
+        """
 
         if type(index) == int:
             index = self.inclusions_uncorrected.index[index]
