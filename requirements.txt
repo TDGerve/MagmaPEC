@@ -11,4 +11,4 @@ statsmodels
 alive_progress
 matplotlib
 matplotlib-label-lines
-magmapandas
+magmapandas>=2.1.1
