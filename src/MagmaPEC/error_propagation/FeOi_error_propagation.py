@@ -44,7 +44,6 @@ class FeOi_prediction:
 
     @property
     def coefficients(self):
-        """Fitted regression coefficients"""
 
         if not hasattr(self, "_slopes"):
             raise AttributeError("No regression found")
@@ -53,7 +52,6 @@ class FeOi_prediction:
 
     @property
     def errors(self):
-        """One standard deviation errors on ``coefficients``"""
 
         if not hasattr(self, "_slopes_error"):
             raise AttributeError("No regression found")
@@ -64,7 +62,6 @@ class FeOi_prediction:
 
     @property
     def model(self) -> callable:
-        """FeO prediction model"""
         return partial(self._FeO_initial_func, coefficients=self.coefficients)
 
     def get_OLS_coefficients(self) -> None:

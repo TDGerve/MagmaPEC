@@ -24,9 +24,9 @@ class PEC_MC_parameters:
     Parameters
     ----------
     melt_errors : pandas Series, None
-        one standard deviation errors on melt compositions in oxide wt. %. Melt compositions are assumed to be error-free when set to None. Default value: None
+        one standard deviation errors on melt compositions in oxide wt. %. Errors are 0 when set to None. Default value: None
     olivine_errors : pandas Series, None
-        one standard deviation errors on olivine compositions in oxide wt. %. Melt compositions are assumed to be error-free when set to None. Default value: None
+        one standard deviation errors on olivine compositions in oxide wt. %. Errors are 0 when set to None. Default value: None
     FeOi_errors : float, pandas Series, :py:class:`~MagmaPEC.error_propagation.FeOi_prediction`
         errors on melt initial FeO content. float or Series for errors on FeO, FeOi_prediction for errors on coefficients of linear regressions of FeO against melt major element compositions. Default value: 0.0
     Fe3Fe2 : bool

@@ -15,11 +15,14 @@ from MagmaPEC.tools import FeO_Target
 
 
 class PEC:
-    # TODO link to configuration documentation.
     """
-    Class for post-entrapment crystallisation (PEC) correction of olivine-hosted melt inclusions.
+    Class for post-entrapment crystallisation (PEC) correction of olivine-hosted melt inclusions. The algorithm is modified after Petrolog3:
 
-    Model settings are controlled by the global PEC configuration.
+    L. V. Danyushesky and P. Plechov (2011) Petrolog3: Integrated software for modeling crystallization processes Geochemistry, Geophysics, Geosystems, vol 12 
+
+    Model specific settings like calculation stepsizes and convergence values are controlled by :py:class:`~MagmaPEC.PEC_configuration.PEC_configuration`. 
+    
+    More general settings like |fO2| buffer (offsets) and model selection for Kd, |Fe3Fe2| and liquidus temperature are set in the configuration of `MagmaPandas <https://magmapandas.readthedocs.io/en/latest/notebooks/config.html>`_
 
     Parameters
     ----------
@@ -172,6 +175,11 @@ class PEC:
         )
 
     def equilibrate_inclusions(self, **kwargs):
+        """
+        Run correction stage 1.
+        
+        Fe-Mg equilibrium between inclusions and olivine hosts is restored based on modelled partitioning coefficients. Isothermal
+        """
 
         model = equilibration(
             inclusions=self.inclusions,
@@ -192,15 +200,11 @@ class PEC:
 
     def correct_olivine_crystallisation(self, inplace=False, **kwargs):
         """
-        Correct an olivine hosted melt inclusion for post entrapment crystallisation or melting by
-        respectively melting or crystallising host olivine.
-        Expects the melt inclusion is completely equilibrated with the host crystal.
-        The models exits when the user input original melt inclusion FeO content is reached.
-        Based on the postentrapment reequilibration procedure in Petrolog:
+        Run correction stage 2.
 
-        L. V. Danyushesky and P. Plechov (2011)
-        Petrolog3: Integrated software for modeling crystallization processes
-        Geochemistry, Geophysics, Geosystems, vol 12
+        Correct melt inclusions for post entrapment modification by melting or crystallising host olivine.
+        Expects the melt inclusion is completely equilibrated with the host crystal.
+        The models exits when inclusion initial FeO contents are restored.
         """
 
         if not self._model_results["isothermal_equilibration"].any():
