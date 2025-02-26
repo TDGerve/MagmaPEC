@@ -22,7 +22,7 @@ dependencies = [
     "alive_progress",
     "matplotlib-label-lines",
     "matplotlib",
-    "elementMass" >= 1.1.0,
+    "elementMass >= 1.1.0",
     "magmapandas >= 2.1.1",
     "ipython",
     "scikit-learn",
