@@ -23,7 +23,7 @@ MagmaPEC can be installed with pip by running:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/TDGerve/MagmaPEC.git
+    pip install magmapec
 
 in a terminal.
 If you want to install from a specific git branch or release, use:
@@ -31,7 +31,7 @@ If you want to install from a specific git branch or release, use:
 .. code-block:: bash
 
     pip install git+https://github.com/TDGerve/MagmaPEC.git@tag
-
+    
 where *tag* should be repleaced by the release tag or branch name (e.g. *v1.0.0* or *development*)
 
 Indices and tables
