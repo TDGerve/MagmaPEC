@@ -117,6 +117,6 @@ class PEC_configuration(metaclass=_meta_PEC_configuration):
         cls._Fe2_behaviour = "buffered"
         cls._stepsize_equilibration = 0.002
         cls._stepsize_crystallisation = 0.05
-        cls._decrease_factor = 5
+        cls._decrease_factor = 5.0
         cls.FeO_converge = 0.05
         cls.Kd_converge = 5e-3

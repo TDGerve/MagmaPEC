@@ -111,7 +111,7 @@ class equilibration:
         FeMg_vector = pd.DataFrame(
             0, index=self.inclusions.index, columns=self.inclusions.columns
         )
-        FeMg_vector.loc[:, ["FeO", "MgO"]] = [1, -1]
+        FeMg_vector.loc[:, ["FeO", "MgO"]] = [1.0, -1.0]
 
         return FeMg_vector
 
@@ -141,7 +141,7 @@ class equilibration:
             P_bar=pressure,
             Fe3Fe2=Fe3Fe2,
             offset_parameters=self.offset_parameters["Kd"],
-            fO2=fO2,            
+            fO2=fO2,
         )
 
         if isinstance(Kd_equilibrium, (float, int)):
