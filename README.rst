@@ -1,7 +1,7 @@
 ========
 MagmaPEC
 ========
-MagmaPEC is a flexible algorithm for correcting olivine-hosted melt inclusions for the effects of post-entrapment crystallisation (PEC) or melting. MagmaPEC is based on models implemented in `MagmaPandas <https://pypi.org/project/MagmaPandas/>`_.
+MagmaPEC is a flexible algorithm for correcting olivine-hosted melt inclusions for the effects of post-entrapment crystallisation (PEC) or melting  and includes error propagation of various parameters through a Monte-Carlo simulation. MagmaPEC is based on models implemented in `MagmaPandas <https://pypi.org/project/MagmaPandas/>`_.
 
 Documentation
 -------------
