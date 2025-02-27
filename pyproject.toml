@@ -16,14 +16,14 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pandas",
-    "numpy",
+    "pandas<=2.1.4",
+    "numpy<=1.26.4",
     "scipy",
     "alive_progress",
     "matplotlib-label-lines",
     "matplotlib",
     "elementMass >= 1.1.0",
-    "magmapandas >= 2.1.1",
+    "magmapandas >= 2.1.2",
     "ipython",
     "scikit-learn",
     "statsmodels",
