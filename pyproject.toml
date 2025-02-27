@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MagmaPEC"
-version = "1.0.1"
+version = "1.0.2"
 authors = [{ name = "Thomas van Gerve" }]
 description = "MagmaPandas based PEC correction tool for olivine-hosted melt inclusions."
 readme = "README.rst"
