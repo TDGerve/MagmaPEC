@@ -316,7 +316,7 @@ class FeOi_prediction:
 
     def predict(self, melt: pd.DataFrame) -> pd.Series:
         """Predict melt FeO contents with the current model"""
-        return self.model()(melt)
+        return self.model(melt)
 
 
 # A wrapper for statsmodel, for use within sklearn
