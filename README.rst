@@ -1,5 +1,6 @@
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.15308118.svg
-  :target: https://doi.org/10.5281/zenodo.15308118
+.. image:: https://zenodo.org/badge/763548550.svg
+  :target: https://zenodo.org/badge/latestdoi/763548550
+
 
 ========
 MagmaPEC
