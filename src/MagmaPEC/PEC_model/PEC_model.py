@@ -181,6 +181,9 @@ class PEC:
         Run correction stage 1.
 
         Fe-Mg equilibrium between inclusions and olivine hosts is restored via isothermal Fe-Mg cation exchange. Equilibrium is checked with modelled partitioning coefficients (Kd).
+
+        progressbar :   boolean
+            show progress bar.
         """
 
         model = equilibration(
@@ -209,6 +212,9 @@ class PEC:
         Correct melt inclusions for post entrapment modification by melting or crystallising host olivine.
         Expects complete Fe-Mg equilibration between inclusions and host crystals (i.e. the output from stage 1: :py:meth:`~MagmaPEC.PEC_model.PEC.equilibrate_inclusions`).
         The models exits when inclusion initial FeO contents are restored.
+
+        progressbar :   boolean
+            show progress bar.
         """
 
         if not self._model_results["isothermal_equilibration"].any():
@@ -251,6 +257,9 @@ class PEC:
         Correct inclusions for PEC.
 
         Runs Stage 1, :py:meth:`~MagmaPEC.PEC_model.PEC.equilibrate_inclusions`, and 2, :py:meth:`~MagmaPEC.PEC_model.PEC.correct_olivine_crystallisation`, to fully correct melt inclusion for post-entrapment modification processes.
+
+        progressbar :   boolean
+            show progress bar.
         """
 
         self.equilibrate_inclusions(progressbar=progressbar, **kwargs)
