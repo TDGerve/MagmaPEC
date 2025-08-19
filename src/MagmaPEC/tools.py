@@ -82,6 +82,7 @@ def get_olivine_composition(melt_mol_fractions, Fe3Fe2, Kd):
         columns=melt_mol_fractions.columns,
         units="mol fraction",
         datatype="oxide",
+        dtype=float,
     )
     olivine = olivine.fillna(
         0.0
