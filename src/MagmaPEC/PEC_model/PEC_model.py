@@ -176,7 +176,7 @@ class PEC:
             name="Fe_loss",
         )
 
-    def equilibrate_inclusions(self, **kwargs):
+    def equilibrate_inclusions(self, progressbar=True, **kwargs):
         """
         Run correction stage 1.
 
@@ -191,7 +191,7 @@ class PEC:
         )
 
         corrected_melt_compositions, olivine_crystallised, model_results = (
-            model.equilibrate(inplace=False, **kwargs)
+            model.equilibrate(inplace=False, progressbar=progressbar, **kwargs)
         )
 
         self.inclusions = corrected_melt_compositions
@@ -200,7 +200,9 @@ class PEC:
         )
         self._model_results["isothermal_equilibration"] = model_results.values
 
-    def correct_olivine_crystallisation(self, inplace=False, **kwargs):
+    def correct_olivine_crystallisation(
+        self, inplace=False, progressbar=True, **kwargs
+    ):
         """
         Run correction stage 2.
 
@@ -229,6 +231,7 @@ class PEC:
                     select_samples, "equilibration_crystallisation"
                 ],
                 inplace=False,
+                progressbar=progressbar,
             )
         )
 
@@ -241,15 +244,17 @@ class PEC:
             model_results.values
         )
 
-    def correct(self, **kwargs) -> Tuple[Melt, pd.DataFrame, pd.DataFrame]:
+    def correct(
+        self, progressbar=True, **kwargs
+    ) -> Tuple[Melt, pd.DataFrame, pd.DataFrame]:
         """
         Correct inclusions for PEC.
 
         Runs Stage 1, :py:meth:`~MagmaPEC.PEC_model.PEC.equilibrate_inclusions`, and 2, :py:meth:`~MagmaPEC.PEC_model.PEC.correct_olivine_crystallisation`, to fully correct melt inclusion for post-entrapment modification processes.
         """
 
-        self.equilibrate_inclusions(**kwargs)
-        self.correct_olivine_crystallisation(**kwargs)
+        self.equilibrate_inclusions(progressbar=progressbar, **kwargs)
+        self.correct_olivine_crystallisation(progressbar=progressbar, **kwargs)
 
         self._olivine_corrected["total_crystallisation"] = self._olivine_corrected[
             ["equilibration_crystallisation", "PE_crystallisation"]

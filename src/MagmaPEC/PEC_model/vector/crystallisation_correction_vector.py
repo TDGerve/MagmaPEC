@@ -5,10 +5,6 @@ import numpy as np
 import pandas as pd
 from alive_progress import alive_bar, config_handler
 
-from MagmaPEC.equilibration_functions import diffusive_equilibration
-from MagmaPEC.PEC_configuration import PEC_configuration
-from MagmaPEC.tools import FeO_Target, variables_container
-
 config_handler.set_global(
     title_length=17,
     manual=True,
@@ -18,6 +14,10 @@ config_handler.set_global(
     length=30,
     force_tty=True,
 )
+
+from MagmaPEC.equilibration_functions import diffusive_equilibration
+from MagmaPEC.PEC_configuration import PEC_configuration
+from MagmaPEC.tools import FeO_Target, null_progressbar, variables_container
 
 
 class crystallisation_correction:
@@ -116,7 +116,13 @@ class crystallisation_correction:
 
         return melts_equilibrated.normalise(), error_samples
 
-    def correct(self, equilibration_crystallisation=0.0, inplace=False, **kwargs):
+    def correct(
+        self,
+        equilibration_crystallisation=0.0,
+        inplace=False,
+        progressbar=True,
+        **kwargs,
+    ):
         """
         Correct an olivine hosted melt inclusion for post entrapment crystallisation or melting by
         respectively melting or crystallising host olivine.
@@ -160,11 +166,15 @@ class crystallisation_correction:
             stepsize=self.stepsize,
             P_bar=self.P_bar,
         )
+        if progressbar:
+            bar_manager = alive_bar(
+                total=total_inclusions,
+                title=f"{'Equilibrating': <13} ...",
+            )
+        else:
+            bar_manager = null_progressbar()
 
-        with alive_bar(
-            title=f"{'Correcting':<13} ...",
-            total=total_inclusions,
-        ) as bar:
+        with bar_manager as bar:
 
             while sum(FeO_mismatch) > 0:
 

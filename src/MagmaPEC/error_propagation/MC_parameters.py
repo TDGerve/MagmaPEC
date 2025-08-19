@@ -7,6 +7,7 @@ import pandas as pd
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
 
+from MagmaPEC import model_configuration
 from MagmaPEC.error_propagation.FeOi_error_propagation import FeOi_prediction
 
 
@@ -76,8 +77,8 @@ class PEC_MC_parameters:
             amount of random samples.
         """
 
-        Fe3Fe2_model = Fe3Fe2_models_dict[mp.configuration.Fe3Fe2_model]
-        Kd_model = Kd_olmelt_FeMg_models_dict[mp.configuration.Kd_model]
+        Fe3Fe2_model = Fe3Fe2_models_dict[model_configuration.Fe3Fe2_model]
+        Kd_model = Kd_olmelt_FeMg_models_dict[model_configuration.Kd_model]
 
         # melt
         if self.melt_errors is None:

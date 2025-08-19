@@ -3,11 +3,11 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from MagmaPandas.configuration import configuration
 from MagmaPandas.MagmaFrames import Melt
 from MagmaPandas.MagmaSeries import MagmaSeries
 from scipy.optimize import root_scalar
 
+from MagmaPEC import model_configuration
 from MagmaPEC.equilibration_functions import _root_Kd
 from MagmaPEC.Kd_calculation import _calculate_Kds
 
@@ -42,7 +42,7 @@ def crystallisation_correction_scalar(
     converge = kwargs.get(
         "converge", getattr(PEC_configuration, "FeO_converge")
     )  # FeO convergence
-    dfO2 = kwargs.get("dfO2", configuration.dfO2)
+    dfO2 = kwargs.get("dfO2", model_configuration.dfO2)
     calculate_FeO_target = False
     # Parameters for the while loop
     decrease_factor = getattr(PEC_configuration, "decrease_factor")

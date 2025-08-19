@@ -1,12 +1,29 @@
 from functools import partial
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
 import pandas as pd
+from alive_progress import alive_bar, config_handler
+
+config_handler.set_global(
+    title_length=17,
+    manual=True,
+    theme="smooth",
+    spinner=None,
+    stats=False,
+    length=30,
+    force_tty=True,
+)
+
 from IPython.display import clear_output
 from MagmaPandas.MagmaFrames import Melt, Olivine
+
 from MagmaPEC.error_propagation.FeOi_error_propagation import FeOi_prediction
 from MagmaPEC.error_propagation.MC_parameters import PEC_MC_parameters
 from MagmaPEC.PEC_model import PEC
+
+_n_cores_free = 2  # use all but 2 cpu cores during multithread operations
+_n_cores = max(1, cpu_count() - _n_cores_free)
 
 
 class PEC_MC:
@@ -56,23 +73,51 @@ class PEC_MC:
 
         self.parameters = MC_parameters
 
-    def run(self, n: int):
+    def _PEC_multicore(self, parameters):
         """
-        Run the PEC correction Monte Carlo loop.
+        Wrapper for multiprocess calling of PEC corrections.
+        """
+
+        i = parameters[0]
+
+        melt_MC, olivine_MC, FeOi = self._process_MC_params(*parameters[1:4])
+
+        self.model = PEC(
+            inclusions=melt_MC,
+            olivines=olivine_MC,
+            P_bar=self.P_bar,
+            FeO_target=FeOi,
+            Fe3Fe2_offset_parameters=parameters[4],
+            Kd_offset_parameters=parameters[5],
+            temperature_offset_parameters=parameters[6],
+        )
+
+        melts_corr, pec, checks = self.model.correct(progressbar=False)
+
+        return i, (melts_corr, pec, checks)
+
+    def _run_multicore(
+        self,
+        n: int,
+        n_cores: int,
+    ):
+        """
+        Run the PEC correction Monte Carlo loop on multiple cpu cores.
 
         Parameters
         ----------
         n : int
             number of iterations in the Monte Carlo loop
+        n_cores: int
+            number
         """
-
         self.pec_MC = pd.DataFrame(
             columns=self.inclusions.index, index=pd.Series(range(n), name="iteration")
         )
         self.inclusions_MC = {
             name: Melt(
                 columns=list(self.inclusions.columns)
-                + ["isothermal_equilibration", "Kd_equilibration"],
+                + ["isothermal_equilibration", "Kd_equilibration", "FeO_converge"],
                 index=pd.Series(range(n), name="iteration"),
             )
             for name in self.inclusions.index
@@ -80,30 +125,54 @@ class PEC_MC:
 
         self.parameters.get_parameters(n=n)
 
-        for i, (*params, Fe3Fe2_err, Kd_err, temperature_err) in enumerate(
-            zip(*self.parameters._get_iterators())
+        parameters = [
+            [i, *v] for i, v in enumerate(zip(*self.parameters._get_iterators()))
+        ]
+
+        with (
+            Pool(processes=n_cores) as pool,
+            alive_bar(
+                n,
+                spinner=None,
+                length=25,
+                manual=True,
+                theme="smooth",
+                force_tty=True,
+                title="Monte Carlo iterations...",
+                title_length=25,
+            ) as bar,
         ):
-            clear_output()
-            print(f"Monte Carlo loop\n{i+1:03}/{n:03}")
 
-            melt_MC, olivine_MC, FeOi = self._process_MC_params(*params)
+            results = pool.imap_unordered(self._PEC_multicore, parameters)
+            pool.close()
 
-            self.model = PEC(
-                inclusions=melt_MC,
-                olivines=olivine_MC,
-                P_bar=self.P_bar,
-                FeO_target=FeOi,
-                Fe3Fe2_offset_parameters=Fe3Fe2_err,
-                Kd_offset_parameters=Kd_err,
-                temperature_offset_parameters=temperature_err,
-            )
+            finished = 0
+            bar(0 / n)
 
-            melts_corr, pec, T_K = self.model.correct()
-            for name, row in melts_corr.iterrows():
-                self.inclusions_MC[name].loc[i] = row
-                self.pec_MC.loc[i, name] = pec.loc[name, "total_crystallisation"]
+            for i, (melts_corr, pec, checks) in results:
+                finished += 1
+                bar(finished / n)
+
+                for name, row in melts_corr.iterrows():
+                    self.inclusions_MC[name].loc[i] = pd.concat([row, checks.loc[name]])
+                    self.pec_MC.loc[i, name] = pec.loc[name, "total_crystallisation"]
 
         self._calculate_errors()
+
+    def run(self, n: int, multicore=True):
+        """
+        Run the PEC correction Monte Carlo loop.
+
+        Parameters
+        ----------
+        n : int
+            number of iterations in the Monte Carlo loop
+        multicore : boolean
+            run calculations in parallel across multiple cpu cores
+        """
+        n_cores = _n_cores if multicore else 1
+
+        self._run_multicore(n=n, n_cores=n_cores)
 
     def _process_MC_params(self, melt_err, olivine_err, FeOi_err):
 

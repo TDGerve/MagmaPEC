@@ -25,7 +25,11 @@ from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPEC.equilibration_functions import isothermal_equilibration
 from MagmaPEC.Kd_calculation import calculate_Kds
 from MagmaPEC.PEC_configuration import PEC_configuration
-from MagmaPEC.tools import get_olivine_composition, variables_container
+from MagmaPEC.tools import (
+    get_olivine_composition,
+    null_progressbar,
+    variables_container,
+)
 
 
 class equilibration:
@@ -215,7 +219,7 @@ class equilibration:
         except AttributeError:
             w.warn("Model not yet initialised")
 
-    def equilibrate(self, inplace=False, **kwargs):
+    def equilibrate(self, inplace=False, progressbar=True, **kwargs):
         """
         Equilibrate Fe and Mg between melt inclusions and their olivine host via diffusive Fe-Mg exchange
         """
@@ -277,10 +281,15 @@ class equilibration:
             stepsize=self.stepsize,
         )
 
-        with alive_bar(
-            total=total_inclusions,
-            title=f"{'Equilibrating': <13} ...",
-        ) as bar:
+        if progressbar:
+            bar_manager = alive_bar(
+                total=total_inclusions,
+                title=f"{'Equilibrating': <13} ...",
+            )
+        else:
+            bar_manager = null_progressbar()
+
+        with bar_manager as bar:
             # , Pool() as pool
             bar(sum(~disequilibrium) / total_inclusions)
             while sum(disequilibrium) > 0:

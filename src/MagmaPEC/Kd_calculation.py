@@ -1,10 +1,11 @@
 from typing import Tuple
 
 import pandas as pd
-from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
+
+from MagmaPEC import model_configuration
 
 
 def calculate_Fe2FeTotal(Fe3Fe2, **kwargs):
@@ -29,7 +30,7 @@ def calculate_Kds(
     Model equilibrium Kds and calculate measured Kds
     """
 
-    Kd_model = Kd_olmelt_FeMg_models_dict[configuration.Kd_model]
+    Kd_model = Kd_olmelt_FeMg_models_dict[model_configuration.Kd_model]
 
     Kd_observed = calculate_observed_Kd(
         melt_mol_fractions=melt_mol_fractions, Fe3Fe2=Fe3Fe2, forsterite=forsterite
@@ -64,7 +65,7 @@ def _calculate_Kds(melt_mol_fractions, forsterite, P_bar):
     T_K = melt_mol_fractions.temperature(P_bar=P_bar)
     fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar)
 
-    Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
+    Fe3Fe2_model = Fe3Fe2_models_dict[model_configuration.Fe3Fe2_model]
     Fe3Fe2 = Fe3Fe2_model._calculate_Fe3Fe2_(
         melt_mol_fractions=melt_mol_fractions,
         T_K=T_K,

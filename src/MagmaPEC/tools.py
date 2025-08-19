@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import pandas as pd
 from MagmaPandas.MagmaFrames import Olivine
 
@@ -89,3 +91,8 @@ def get_olivine_composition(melt_mol_fractions, Fe3Fe2, Kd):
     ).normalise()  # why did I replace with 1e-6 instead of 0.0 before?
 
     return olivine
+
+
+@contextmanager
+def null_progressbar(*args, **kwargs):
+    yield lambda *args, **kwargs: None

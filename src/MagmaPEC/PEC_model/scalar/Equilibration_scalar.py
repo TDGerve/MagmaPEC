@@ -4,7 +4,6 @@ from typing import Union
 import elementMass as e
 import numpy as np
 import pandas as pd
-from MagmaPandas.configuration import configuration
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
@@ -12,6 +11,7 @@ from MagmaPandas.MagmaFrames import Melt
 from MagmaPandas.MagmaSeries import MagmaSeries
 from scipy.optimize import root_scalar
 
+from MagmaPEC import model_configuration
 from MagmaPEC.equilibration_functions import _root_temperature
 from MagmaPEC.PEC_configuration import PEC_configuration
 
@@ -35,7 +35,7 @@ def equilibration_scalar(
         "Kd_converge", getattr(PEC_configuration, "Kd_converge")
     )  # Kd converge
     Fe2_behaviour = getattr(PEC_configuration, "_Fe2_behaviour")
-    dfO2 = kwargs.get("dfO2", configuration.dfO2)
+    dfO2 = kwargs.get("dfO2", model_configuration.dfO2)
     # Parameters for the while loop
     olivine_crystallised = np.array([0.0])
     decrease_factor = getattr(PEC_configuration, "decrease_factor")
@@ -47,8 +47,8 @@ def equilibration_scalar(
     temperature = inclusion.temperature(P_bar=P_bar)
     fO2 = calculate_fO2(T_K=temperature, P_bar=P_bar, dfO2=dfO2)
     # Collect configured models
-    Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
-    Kd_model = Kd_olmelt_FeMg_models_dict[configuration.Kd_model]
+    Fe3Fe2_model = Fe3Fe2_models_dict[model_configuration.Fe3Fe2_model]
+    Kd_model = Kd_olmelt_FeMg_models_dict[model_configuration.Kd_model]
     # Get olivine molar oxide fractions
     if isinstance(olivine, float):
         if olivine < 0 or olivine > 1:
@@ -229,7 +229,7 @@ def _calculate_Fe2(
     Fe3Fe2_model: callable = None,
 ):
     if Fe3Fe2_model is None:
-        Fe3Fe2_model = Fe3Fe2_models_dict[configuration.Fe3Fe2_model]
+        Fe3Fe2_model = Fe3Fe2_models_dict[model_configuration.Fe3Fe2_model]
 
     m_fractions = melt_mol_fractions.copy()
     m_fractions = m_fractions.normalise()
