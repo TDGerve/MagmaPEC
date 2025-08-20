@@ -169,7 +169,7 @@ class crystallisation_correction:
         if progressbar:
             bar_manager = alive_bar(
                 total=total_inclusions,
-                title=f"{'Equilibrating': <13} ...",
+                title=f"{'Correcting': <13} ...",
             )
         else:
             bar_manager = null_progressbar()

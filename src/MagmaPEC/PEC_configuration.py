@@ -104,7 +104,7 @@ class PEC_configuration(metaclass=_meta_PEC_configuration):
     decrease_factor : float, int
         decrease factor for Fe-Mg exchange and olivine crystallisation/melting stepsizes after overstepping convergence values. Default value: 5.
     FeO_converge    : float
-        value within which melt FeO and target FeO are considered the same. Default value: 0.05 wt. %
+        value in wt.% within which melt FeO and target FeO are considered the same. Default value: 0.05 wt.%
     Kd_converge : float
         value within which modelled and observed olivine-melt Fe-Mg Kd are considered the same. Default value: 0.001
     """
