@@ -10,6 +10,8 @@ from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
 from MagmaPEC import model_configuration
 from MagmaPEC.error_propagation.FeOi_error_propagation import FeOi_prediction
 
+# TODO add links to extra information about Fe3Fe2 and Kd error estimates.
+
 
 class PEC_MC_parameters:
     """
@@ -31,9 +33,9 @@ class PEC_MC_parameters:
     FeOi_errors : float, pandas Series, :py:class:`~MagmaPEC.error_propagation.FeOi_prediction`
         errors on melt initial FeO content. float or Series for errors on FeO, FeOi_prediction for errors on coefficients of linear regressions of FeO against melt major element compositions. Default value: 0.0
     Fe3Fe2 : bool
-        propagate melt |Fe3Fe2| errors. Default value: False
+        propagate melt |Fe3Fe2| errors. Errors are calculated from regressions on a validation dataset. Default value: False
     Kd : bool
-        propagate olivine-melt Fe-Mg partition coefficient errors. Default value: False
+        propagate olivine-melt Fe-Mg partition coefficient errors. Errors are calibration errors as reported in their respective publications. Default value: False
 
     Attributes
     ----------
