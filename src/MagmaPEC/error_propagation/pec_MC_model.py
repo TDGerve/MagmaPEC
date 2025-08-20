@@ -82,7 +82,7 @@ class PEC_MC:
 
         melt_MC, olivine_MC, FeOi = self._process_MC_params(*parameters[1:4])
 
-        self.model = PEC(
+        model = PEC(
             inclusions=melt_MC,
             olivines=olivine_MC,
             P_bar=self.P_bar,
@@ -92,15 +92,11 @@ class PEC_MC:
             temperature_offset_parameters=parameters[6],
         )
 
-        melts_corr, pec, checks = self.model.correct(progressbar=False)
+        melts_corr, pec, checks = model.correct(progressbar=False)
 
         return i, (melts_corr, pec, checks)
 
-    def _run_multicore(
-        self,
-        n: int,
-        n_cores: int,
-    ):
+    def _run_multicore(self, n: int, n_cores: int):
         """
         Run the PEC correction Monte Carlo loop on multiple cpu cores.
 
@@ -193,6 +189,16 @@ class PEC_MC:
                     self.FeO_target._FeO_initial_func,
                     coefficients=self.FeO_target.coefficients,
                 )
+
+        elif isinstance(FeOi_err, (pd.Series, np.ndarray)):
+            # for errors per inclusion
+            if isinstance(self.FeO_target, FeOi_prediction):
+                raise TypeError(
+                    "array-like FeOi_error is not supported with FeOi_prediction!"
+                )
+            elif isinstance(self.FeO_target, (float, int, pd.Series, np.ndarray)):
+                FeOi = self.FeO_target + FeOi_err
+
         elif isinstance(FeOi_err, tuple):
             # for errors on linear regression coefficients
             if "intercept" in FeOi_err[1].index:
@@ -202,6 +208,11 @@ class PEC_MC:
             elif FeOi_err[1].index.equals(self.inclusions.index):
                 # for FeO errors per inclusion
                 FeOi = self.FeO_target + FeOi_err[1]
+
+        else:
+            raise TypeError(
+                "FeOi_error filetype not supported, please use float, int, or array-like (numpy, pandas)"
+            )
 
         return melt_MC, olivine_MC, FeOi
 
