@@ -2,8 +2,10 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPandas.MagmaFrames import Melt, Olivine
 
+from MagmaPEC.Kd_calculation import calculate_observed_Kd
 from MagmaPEC.PEC_configuration import PEC_configuration
 from MagmaPEC.PEC_model.scalar import (
     crystallisation_correction_scalar,
@@ -92,7 +94,7 @@ class PEC:
         )
         self._olivine = self._olivine.reindex(
             columns=self.inclusions.columns, fill_value=0.0
-        )
+        ).recalculate()
 
         # pressure
         try:
@@ -133,7 +135,7 @@ class PEC:
 
     @olivine_corrected.setter
     def olivine_corrected(self, value):
-        print("read only!")
+        print("read only")
 
     @property
     def olivine(self):
@@ -141,22 +143,7 @@ class PEC:
 
     @olivine.setter
     def olivine(self, value):
-        print("Olivine is read only")
-
-    @property
-    def equilibrated(self) -> pd.Series:
-        """
-        Booleans set to True for inclusions that are in Fe-Mg equilibrium with their host olivine.
-        """
-
-        Kd_converge = getattr(PEC_configuration, "Kd_converge") * 1.5
-        Kd_equilibrium, Kd_real = self.calculate_Kds()
-
-        return pd.Series(
-            np.isclose(Kd_equilibrium, Kd_real, atol=Kd_converge, rtol=0),
-            index=Kd_equilibrium.index,
-            name="equilibrated",
-        )
+        print("olivine is read only")
 
     @property
     def Fe_loss(self) -> pd.Series:
@@ -274,6 +261,50 @@ class PEC:
             self._olivine_corrected.mul(100),
             self._model_results.copy(),
         )
+
+    def get_PTX(self, P_bar=None):
+
+        if P_bar is None:
+            P_bar, T_K = self._PT_iterate()
+        else:
+            T_K = self.inclusions.temperature(P_bar=P_bar)
+
+        Fe3Fe2 = self.inclusions.Fe3Fe2(T_K=T_K, P_bar=P_bar)
+
+        forsterite = self.olivine.forsterite
+        Kd_modelled = self.inclusions.Kd_olivine_FeMg_eq(
+            T_K=T_K, P_bar=P_bar, Fe3Fe2=Fe3Fe2, forsterite_initial=forsterite
+        )
+        Kd_measured = calculate_observed_Kd(
+            self.inclusions.moles(), Fe3Fe2=Fe3Fe2, forsterite=forsterite
+        )
+        fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar)
+
+        return pd.DataFrame(
+            {
+                "P_bar": P_bar,
+                "T_K": T_K,
+                "Kd_modelled": Kd_modelled,
+                "Kd_inclusion": Kd_measured,
+                "Fe3Fe2": Fe3Fe2,
+                "fO2_Pa": fO2,
+            }
+        )
+
+    def _PT_iterate(self, convergence=0.01):
+
+        T_K = self.inclusions.temperature(P_bar=1e3)
+        P_bar = self.inclusions.volatile_saturation_pressure(T_K=T_K)
+
+        while True:
+            T_K = self.inclusions.temperature(P_bar=P_bar)
+            P_bar_new = self.inclusions.volatile_saturation_pressure(T_K=T_K)
+            dP = (P_bar_new - P_bar) / P_bar_new
+            P_bar = P_bar_new.copy()
+            if (dP < convergence).all():
+                break
+
+        return P_bar, T_K
 
     def correct_inclusion(
         self, index, plot=True, intermediate_steps=False, **kwargs
