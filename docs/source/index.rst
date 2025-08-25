@@ -9,6 +9,7 @@ MagmaPEC quickstart
    about
    getting_started
    examples
+   models
    code_documentation
    support
    license
