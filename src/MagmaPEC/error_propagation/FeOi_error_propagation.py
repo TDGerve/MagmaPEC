@@ -1,6 +1,8 @@
 from functools import partial
 from typing import List
 
+import geoplot as gp
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -282,7 +284,7 @@ class FeOi_prediction:
 
         return pd.concat([self.coeff_total, self.model_fits], axis=1)
 
-    def select_predictors(self, idx: int):
+    def select_predictors(self, idx: int, plot=True):
         """
         Set predictors according to the results from :py:meth:`~MagmaPEC.error_propagation.FeOi_prediction.calculate_model_fits`.
 
@@ -299,6 +301,36 @@ class FeOi_prediction:
             self.coeff_total.loc[idx].drop("intercept").dropna().index.values
         )
         self.get_OLS_coefficients()
+
+        if not plot:
+            return
+
+        var = self.coefficients.loc[self.predictors]
+        intercept = self.coefficients["intercept"]
+        xvals = self.x[var.index].mul(var, axis=1).sum(axis=1)
+
+        xstring = " + ".join([f"{val:.2f}{name}" for name, val in var.items()])
+
+        gp.layout(colos=gp.colors.bright)
+        mm = 1 / 25.4
+
+        fig, ax = plt.subplots(figsize=(90 * mm, 85 * mm))
+
+        ax.plot(
+            xvals.sort_values(),
+            xvals.sort_values() + intercept,
+            "--",
+            c="k",
+            label="regression",
+        )
+        ax.plot(xvals, self.FeO, "D", label="calibration data")
+
+        ax.set_xlabel(xstring, size=8)
+        ax.set_ylabel("FeO (wt.%)")
+
+        ax.legend(fancybox=False, frameon=True)
+
+        plt.show()
 
     @staticmethod
     def _FeO_initial_func(composition, coefficients):
