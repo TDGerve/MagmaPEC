@@ -263,6 +263,14 @@ class PEC:
         )
 
     def get_PTX(self, P_bar=None):
+        """
+        P_bar   : array-like
+            pressures in bar for each inclusion.
+
+        Returns
+        -------
+            pandas dataframe with pressures, temperatures, Kd (current inclusion value, not modelled), melt Fe3Fe2, and fO2 for uncorrected and corrected inclusions.
+        """
 
         if (not hasattr(self, "_olivine_corrected")) or (
             self._olivine_corrected.isna().all().all()
