@@ -264,19 +264,38 @@ class PEC:
 
     def get_PTX(self, P_bar=None):
 
-        if P_bar is None:
-            P_bar, T_K = self._PT_iterate()
-        else:
-            T_K = self.inclusions.temperature(P_bar=P_bar)
+        if (not hasattr(self, "_olivine_corrected")) or (
+            self._olivine_corrected.isna().all().all()
+        ):
+            return self._get_PTX(inclusions=self.inclusions, P_bar=P_bar)
 
-        Fe3Fe2 = self.inclusions.Fe3Fe2(T_K=T_K, P_bar=P_bar)
+        uncorrected = self._get_PTX(inclusions=self.inclusions_uncorrected, P_bar=P_bar)
+        corrected = self._get_PTX(inclusions=self.inclusions, P_bar=P_bar)
+
+        uncorrected.columns = pd.MultiIndex.from_product(
+            [uncorrected.columns, ["uncorrected"]]
+        )
+        corrected.columns = pd.MultiIndex.from_product(
+            [corrected.columns, ["corrected"]]
+        )
+
+        return pd.concat([uncorrected, corrected], axis=1).sort_index(axis=1)
+
+    def _get_PTX(self, inclusions, P_bar=None):
+
+        if P_bar is None:
+            P_bar, T_K = self._PT_iterate(inclusions=inclusions)
+        else:
+            T_K = inclusions.temperature(P_bar=P_bar)
+
+        Fe3Fe2 = inclusions.Fe3Fe2(T_K=T_K, P_bar=P_bar)
 
         forsterite = self.olivine.forsterite
-        Kd_modelled = self.inclusions.Kd_olivine_FeMg_eq(
-            T_K=T_K, P_bar=P_bar, Fe3Fe2=Fe3Fe2, forsterite_initial=forsterite
-        )
+        # Kd_modelled = inclusions.Kd_olivine_FeMg_eq(
+        #     T_K=T_K, P_bar=P_bar, Fe3Fe2=Fe3Fe2, forsterite_initial=forsterite
+        # )
         Kd_measured = calculate_observed_Kd(
-            self.inclusions.moles(), Fe3Fe2=Fe3Fe2, forsterite=forsterite
+            inclusions.moles(), Fe3Fe2=Fe3Fe2, forsterite=forsterite
         )
         fO2 = calculate_fO2(T_K=T_K, P_bar=P_bar)
 
@@ -284,21 +303,21 @@ class PEC:
             {
                 "P_bar": P_bar,
                 "T_K": T_K,
-                "Kd_modelled": Kd_modelled,
-                "Kd_inclusion": Kd_measured,
+                # "Kd_modelled": Kd_modelled,
+                "Kd": Kd_measured,
                 "Fe3Fe2": Fe3Fe2,
                 "fO2_Pa": fO2,
             }
         )
 
-    def _PT_iterate(self, convergence=0.01):
+    def _PT_iterate(self, inclusions, convergence=0.01):
 
-        T_K = self.inclusions.temperature(P_bar=1e3)
-        P_bar = self.inclusions.volatile_saturation_pressure(T_K=T_K)
+        T_K = inclusions.temperature(P_bar=1e3)
+        P_bar = inclusions.volatile_saturation_pressure(T_K=T_K)
 
         while True:
-            T_K = self.inclusions.temperature(P_bar=P_bar)
-            P_bar_new = self.inclusions.volatile_saturation_pressure(T_K=T_K)
+            T_K = inclusions.temperature(P_bar=P_bar)
+            P_bar_new = inclusions.volatile_saturation_pressure(T_K=T_K)
             dP = (P_bar_new - P_bar) / P_bar_new
             P_bar = P_bar_new.copy()
             if (dP < convergence).all():
