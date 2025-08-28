@@ -73,28 +73,22 @@ class PEC_MC:
 
         self.parameters = MC_parameters
 
-    def _PEC_multicore(self, parameters):
+        self.MC_inputs = np.array([])
+
+    def run(self, n: int, multicore=True):
         """
-        Wrapper for multiprocess calling of PEC corrections.
+        Run the PEC correction Monte Carlo loop.
+
+        Parameters
+        ----------
+        n : int
+            number of iterations in the Monte Carlo loop
+        multicore : boolean
+            run calculations in parallel across multiple cpu cores
         """
+        n_cores = _n_cores if multicore else 1
 
-        i = parameters[0]
-
-        melt_MC, olivine_MC, FeOi = self._process_MC_params(*parameters[1:4])
-
-        model = PEC(
-            inclusions=melt_MC,
-            olivines=olivine_MC,
-            P_bar=self.P_bar,
-            FeO_target=FeOi,
-            Fe3Fe2_offset_parameters=parameters[4],
-            Kd_offset_parameters=parameters[5],
-            temperature_offset_parameters=parameters[6],
-        )
-
-        melts_corr, pec, checks = model.correct(progressbar=False)
-
-        return i, (melts_corr, pec, checks)
+        self._run_multicore(n=n, n_cores=n_cores)
 
     def _run_multicore(self, n: int, n_cores: int):
         """
@@ -125,6 +119,8 @@ class PEC_MC:
             [i, *v] for i, v in enumerate(zip(*self.parameters._get_iterators()))
         ]
 
+        inputs_idx = np.array([])
+
         with (
             Pool(processes=n_cores) as pool,
             alive_bar(
@@ -145,32 +141,48 @@ class PEC_MC:
             finished = 0
             bar(0 / n)
 
-            for i, (melts_corr, pec, checks) in results:
+            for i, (melts_corr, pec, checks, inputs) in results:
                 finished += 1
                 bar(finished / n)
+
+                self.MC_inputs = np.append(self.MC_inputs, inputs)
+                inputs_idx = np.append(inputs_idx, i)
 
                 for name, row in melts_corr.iterrows():
                     self.inclusions_MC[name].loc[i] = pd.concat([row, checks.loc[name]])
                     self.pec_MC.loc[i, name] = pec.loc[name, "total_crystallisation"]
 
+        self.MC_inputs = self.MC_inputs[np.argsort(inputs_idx)]
         self._calculate_errors()
 
-    def run(self, n: int, multicore=True):
+    def _PEC_multicore(self, parameters):
         """
-        Run the PEC correction Monte Carlo loop.
-
-        Parameters
-        ----------
-        n : int
-            number of iterations in the Monte Carlo loop
-        multicore : boolean
-            run calculations in parallel across multiple cpu cores
+        Wrapper for multiprocess calling of PEC corrections.
         """
-        n_cores = _n_cores if multicore else 1
 
-        self._run_multicore(n=n, n_cores=n_cores)
+        i = parameters[0]
 
-    def _process_MC_params(self, melt_err, olivine_err, FeOi_err):
+        melt_MC, olivine_MC, pressure_MC, FeOi = self._process_MC_params(
+            *parameters[1:5]
+        )
+
+        inputs = {
+            "inclusions": melt_MC,
+            "olivines": olivine_MC,
+            "P_bar": pressure_MC,
+            "FeO_target": FeOi,
+            "Fe3Fe2_offset_parameters": parameters[5],
+            "Kd_offset_parameters": parameters[6],
+            "temperature_offset_parameters": parameters[7],
+        }
+
+        model = PEC(**inputs)
+
+        melts_corr, pec, checks = model.correct(progressbar=False)
+
+        return i, (melts_corr, pec, checks, inputs)
+
+    def _process_MC_params(self, melt_err, olivine_err, pressure_err, FeOi_err):
 
         # melt_err = melt_err[1] if isinstance(melt_err, tuple) else melt_err
         melt_MC = self.inclusions[self.inclusions.elements].add(melt_err, axis=1)
@@ -178,6 +190,9 @@ class PEC_MC:
         # olivine_err = olivine_err[1] if isinstance(olivine_err, tuple) else olivine_err
         olivine_MC = self.olivines[self.olivines.elements].add(olivine_err, axis=1)
         olivine_MC[olivine_MC < 0] = 0.0
+
+        pressure_MC = self.P_bar.add(pressure_err)
+        pressure_MC[pressure_MC < 0] = 1
 
         if isinstance(FeOi_err, (float, int)):
             # for a fixed FeO error
@@ -214,7 +229,7 @@ class PEC_MC:
                 "FeOi_error filetype not supported, please use float, int, or array-like (numpy, pandas)"
             )
 
-        return melt_MC, olivine_MC, FeOi
+        return melt_MC, olivine_MC, pressure_MC, FeOi
 
     def _calculate_errors(self):
 

@@ -39,7 +39,8 @@ class PEC_MC_parameters:
 
     Attributes
     ----------
-    parameters : Dict
+    parameters : OrderedDict
+        dictionary with errors ordered as 'melt', 'olivine', 'pressure', 'FeOi', 'Fe3Fe2', 'Kd', 'temperature'
     """
 
     parameters = OrderedDict()
@@ -48,7 +49,8 @@ class PEC_MC_parameters:
         self,
         melt_errors: None | pd.Series | pd.DataFrame | np.ndarray = None,
         olivine_errors: None | pd.Series | pd.DataFrame | np.ndarray = None,
-        FeOi_errors: float | FeOi_prediction = 0.0,
+        pressure_errors: pd.Series | np.ndarray | int | float = 0.0,
+        FeOi_errors: float | int | FeOi_prediction = 0.0,
         Fe3Fe2: bool = False,
         Kd: bool = False,
         temperature: bool = False,
@@ -60,8 +62,17 @@ class PEC_MC_parameters:
                 raise TypeError(
                     f"{name} errors need to be None, Series, DataFrame or Array"
                 )
+
+        if (pressure_errors is not None) & (
+            not isinstance(pressure_errors, (pd.Series, np.ndarray, float, int))
+        ):
+            raise TypeError(
+                f"{name} errors need to be None, Series, Array, float, or int"
+            )
+
         self.melt_errors = melt_errors
         self.olivine_errors = olivine_errors
+        self.pressure_errors = pressure_errors
         self.FeOi_errors = FeOi_errors
         self.Fe3Fe2 = Fe3Fe2
         self.Kd = Kd
@@ -79,9 +90,6 @@ class PEC_MC_parameters:
             amount of random samples.
         """
 
-        Fe3Fe2_model = Fe3Fe2_models_dict[model_configuration.Fe3Fe2_model]
-        Kd_model = Kd_olmelt_FeMg_models_dict[model_configuration.Kd_model]
-
         # melt
         if self.melt_errors is None:
             self.parameters["melt"] = np.repeat(0.0, n)
@@ -97,6 +105,16 @@ class PEC_MC_parameters:
             self.parameters["olivine"] = np.random.normal(
                 loc=0, scale=self.olivine_errors, size=(n, *self.olivine_errors.shape)
             )
+
+        if isinstance(self.pressure_errors, (float, int)):
+            self.parameters["pressure"] = np.random.normal(
+                loc=0, scale=self.pressure_errors, size=n
+            )
+        else:
+            self.parameters["pressure"] = np.random.normal(
+                loc=0, scale=self.pressure_errors, size=(n, *self.pressure_errors.shape)
+            )
+
         # FeOi
         if isinstance(self.FeOi_errors, (float, int)):
             self.parameters["FeOi"] = np.random.normal(
