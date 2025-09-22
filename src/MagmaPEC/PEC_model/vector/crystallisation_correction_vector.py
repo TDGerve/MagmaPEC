@@ -170,6 +170,8 @@ class crystallisation_correction:
             bar_manager = alive_bar(
                 total=total_inclusions,
                 title=f"{'Correcting': <13} ...",
+                manual=True,
+                refresh_secs=0.5,
             )
         else:
             bar_manager = null_progressbar()

@@ -285,6 +285,8 @@ class equilibration:
             bar_manager = alive_bar(
                 total=total_inclusions,
                 title=f"{'Equilibrating': <13} ...",
+                manual=True,
+                refresh_secs=0.5,
             )
         else:
             bar_manager = null_progressbar()
