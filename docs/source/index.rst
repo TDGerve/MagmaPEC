@@ -11,6 +11,7 @@ MagmaPEC quickstart
    examples
    models
    code_documentation
+   /notebooks/benchmark
    support
    license
 
