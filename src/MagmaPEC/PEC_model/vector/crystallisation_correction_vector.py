@@ -171,11 +171,12 @@ class crystallisation_correction:
                 total=total_inclusions,
                 title=f"{'Correcting': <13} ...",
                 manual=True,
-                refresh_secs=0.5,
+                refresh_secs=1,
             )
         else:
             bar_manager = null_progressbar()
 
+        i = 0  # loop iteration counter
         with bar_manager as bar:
 
             while sum(FeO_mismatch) > 0:
@@ -231,10 +232,6 @@ class crystallisation_correction:
                         var["stepsize"].loc[reverse_FeO].div(self.decrease_factor)
                     )
 
-                ##################################################
-                # TODO 2024.05.16 CHECK IF THE NEXT FEW LINES WORK
-                ##################################################
-
                 # determine FeO convergence
                 melt_wtpc_loop = var["melt_mol_fractions"].wt_pc()
                 FeO = melt_wtpc_loop["FeO"]
@@ -260,7 +257,11 @@ class crystallisation_correction:
                 FeO_mismatch[remove_samples] = False
                 self._olivine_corrected.loc[remove_samples] = np.nan
 
-                bar(sum(~FeO_mismatch) / total_inclusions)
+                if (i % 5 == 0) or (
+                    sum(FeO_mismatch) == 0
+                ):  # update progress bar every 5 iterations, crutch to fix IOStream flush error warnings.
+                    bar(sum(~FeO_mismatch) / total_inclusions)
+                i += 1
 
         self._model_results.loc[FeO_mismatch.index, "FeO_converge"] = ~FeO_mismatch
         self.inclusions.loc[melt_mol_fractions.index] = (

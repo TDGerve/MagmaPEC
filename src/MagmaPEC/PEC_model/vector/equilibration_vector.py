@@ -286,11 +286,12 @@ class equilibration:
                 total=total_inclusions,
                 title=f"{'Equilibrating': <13} ...",
                 manual=True,
-                refresh_secs=0.5,
+                refresh_secs=1,
             )
         else:
             bar_manager = null_progressbar()
 
+        i = 0  # loop iteration counter
         with bar_manager as bar:
             # , Pool() as pool
             bar(sum(~disequilibrium) / total_inclusions)
@@ -407,7 +408,11 @@ class equilibration:
 
                 reslice = not disequilibrium.loc[samples].equals(disequilibrium_loop)
 
-                bar(sum(~disequilibrium) / total_inclusions)
+                if (i % 5 == 0) or (
+                    sum(disequilibrium) == 0
+                ):  # update progress bar every 5 iterations, crutch to fix IOStream flush error warnings.
+                    bar(sum(~disequilibrium) / total_inclusions)
+                i += 0
 
         corrected_compositions = melt_mol_fractions.wt_pc()
 
