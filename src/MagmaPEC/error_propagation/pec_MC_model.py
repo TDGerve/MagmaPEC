@@ -241,7 +241,7 @@ class PEC_MC:
         self.inclusions_corr = Melt(
             index=self.inclusions.index,
             columns=self.inclusions.elements,
-            units="wt. %",
+            units="wt.%",
             datatype="oxide",
             dtype=float,
         )
