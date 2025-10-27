@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 import pandas as pd
-from MagmaPandas.MagmaFrames import Olivine
+from MagmaPandas import Olivine
 
 from MagmaPEC.Kd_calculation import calculate_Fe2FeTotal
 

@@ -4,11 +4,10 @@ from typing import Union
 import elementMass as e
 import numpy as np
 import pandas as pd
+from MagmaPandas import MagmaSeries, Melt
 from MagmaPandas.Fe_redox.Fe3Fe2_models import Fe3Fe2_models_dict
 from MagmaPandas.fO2.fO2_calculate import calculate_fO2
 from MagmaPandas.Kd.Ol_melt.FeMg import Kd_olmelt_FeMg_models_dict
-from MagmaPandas.MagmaFrames import Melt
-from MagmaPandas.MagmaSeries import MagmaSeries
 from scipy.optimize import root_scalar
 
 from MagmaPEC import model_configuration

@@ -2,8 +2,8 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+from MagmaPandas import Melt, Olivine
 from MagmaPandas.fO2.fO2_calculate import calculate_fO2
-from MagmaPandas.MagmaFrames import Melt, Olivine
 
 from MagmaPEC.Kd_calculation import calculate_observed_Kd
 from MagmaPEC.PEC_configuration import PEC_configuration

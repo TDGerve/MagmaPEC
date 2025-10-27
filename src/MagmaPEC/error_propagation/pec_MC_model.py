@@ -16,7 +16,7 @@ config_handler.set_global(
 )
 
 from IPython.display import clear_output
-from MagmaPandas.MagmaFrames import Melt, Olivine
+from MagmaPandas import Melt, Olivine
 
 from MagmaPEC.error_propagation.FeOi_error_propagation import FeOi_prediction
 from MagmaPEC.error_propagation.MC_parameters import PEC_MC_parameters

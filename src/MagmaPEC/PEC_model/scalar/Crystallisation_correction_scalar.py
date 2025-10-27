@@ -3,8 +3,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from MagmaPandas.MagmaFrames import Melt
-from MagmaPandas.MagmaSeries import MagmaSeries
+from MagmaPandas import MagmaSeries, Melt
 from scipy.optimize import root_scalar
 
 from MagmaPEC import model_configuration
