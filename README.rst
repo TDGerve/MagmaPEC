@@ -14,7 +14,7 @@ Code documentation and working examples are available at `magmapec.readthedocs.i
 
 How to cite MagmaPandas
 ------------------------------
-If have used MagmaPEC in your research, please reference  `this paper <http://dx.doi.org/10.1029/2025GC012420>`_ . To ensure reproducibility, please also mention the release version of MagmaPEC and reference the specific models you used (see `MagmaPandas documentation <https://magmapandas.readthedocs.io/en/latest/code_documentation.html#references>`_).
+If you used MagmaPEC in your research, please reference  `this paper <http://dx.doi.org/10.1029/2025GC012420>`_ published in Geochemistry, Geophysics, Geosystems. To ensur≈e reproducibility, please also mention the release version of MagmaPEC and reference the specific models you used (see `MagmaPandas documentation <https://magmapandas.readthedocs.io/en/latest/code_documentation.html#references>`_).
 
 
 Installation
